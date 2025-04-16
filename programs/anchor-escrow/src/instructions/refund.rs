@@ -3,13 +3,16 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked, CloseAccount, close_account},
+    token_interface::{
+        close_account, transfer_checked, CloseAccount, Mint, TokenAccount, TokenInterface,
+        TransferChecked,
+    },
 };
+
 
 use crate::state::Escrow;
 
 #[derive(Accounts)]
-#[instruction(seed: u64)]
 pub struct Refund<'info> {
     #[account(mut)]
     pub maker: Signer<'info>,
@@ -34,7 +37,7 @@ pub struct Refund<'info> {
         close = maker, // maker gets the rent after closing
         has_one = mint_a, // valiates the mint_a of this struct with the mint_a of the Esrow struct
         has_one = maker, // similar to mint_a
-        seeds = [b"escrow", maker.key().as_ref(), seed.to_le_bytes().as_ref() ],
+        seeds = [b"escrow", maker.key().as_ref(), escrow.seed.to_be_bytes().as_ref() ],
         bump = escrow.bump,
     )]
     // ⚠️ Without has_one, someone could pass in a valid escrow account with mismatched fields, and potentially steal tokens or mess with logic.
@@ -59,7 +62,7 @@ impl<'info> Refund<'info> {
         let signer_seeds: &[&[&[u8]]; 1] = &[&[
             b"escrow", 
             self.maker.key.as_ref(), 
-            &self.escrow.seed.to_be_bytes()[..],
+            &self.escrow.seed.to_le_bytes()[..],
             &[self.escrow.bump]
         ]];
         
@@ -77,7 +80,7 @@ impl<'info> Refund<'info> {
             authority: self.escrow.to_account_info(),
         };
 
-         // Combine the accounts and program into a "CpiContext"
+        // Combine the accounts and program into a "CpiContext"
         let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
         // Make CPI to transfer_checked instruction on token program
