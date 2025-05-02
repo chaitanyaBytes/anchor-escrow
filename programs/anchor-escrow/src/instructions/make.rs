@@ -42,7 +42,7 @@ pub struct Make<'info> {
     #[account(
         init,
         payer = maker,
-        seeds = [b"escrow", maker.key().as_ref(), seed.to_le_bytes().as_ref() ],
+        seeds = [b"escrow", maker.key().as_ref(), seed.to_le_bytes().as_ref()],
         bump,
         space = 8 + Escrow::INIT_SPACE,
     )]
@@ -77,7 +77,8 @@ impl<'info> Make<'info> {
             maker: self.maker.key(), 
             mint_a: self.mint_a.key(), 
             mint_b: self.mint_b.key(), 
-            receive, bump: bump.escrow 
+            receive, 
+            bump: bump.escrow 
         });
 
         Ok(())
