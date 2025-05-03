@@ -53,7 +53,7 @@ pub struct Take<'info> {
     // it may or may not exist
     #[account(
         init_if_needed,
-        payer = maker,
+        payer = taker,
         associated_token::mint = mint_b,
         associated_token::authority = maker,
         associated_token::token_program = token_program
@@ -77,7 +77,7 @@ pub struct Take<'info> {
         has_one = mint_a, // valiates the mint_a of this struct with the mint_a of the Escrow struct
         has_one = maker, // similar to mint_a
         has_one = mint_b, // similar to mint_a
-        seeds = [b"escrow", maker.key().as_ref(), escrow.seed.to_be_bytes().as_ref()],
+        seeds = [b"escrow", maker.key().as_ref(), escrow.seed.to_le_bytes().as_ref()],
         bump = escrow.bump,
     )]
     // ⚠️ Without has_one, someone could pass in a valid escrow account with mismatched fields, and potentially steal tokens or mess with logic.
@@ -119,7 +119,9 @@ impl<'info> Take<'info> {
         let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
 
         // Make CPI to transfer_checked instruction on token program
-        transfer_checked(cpi_context, self.escrow.receive, decimals)
+        transfer_checked(cpi_context, self.escrow.receive, decimals)?;
+
+        Ok(())
     }
 
     // function for transferring token a from vault to taker_ata_b
@@ -162,6 +164,8 @@ impl<'info> Take<'info> {
             signer_seeds,
         );
 
-        close_account(close_cpi_ctx)
+        close_account(close_cpi_ctx)?;
+
+        Ok(())
     }
 }

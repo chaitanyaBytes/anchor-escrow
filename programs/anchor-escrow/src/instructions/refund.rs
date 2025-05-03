@@ -9,7 +9,6 @@ use anchor_spl::{
     },
 };
 
-
 use crate::state::Escrow;
 
 #[derive(Accounts)]
@@ -37,7 +36,7 @@ pub struct Refund<'info> {
         close = maker, // maker gets the rent after closing
         has_one = mint_a, // valiates the mint_a of this struct with the mint_a of the Esrow struct
         has_one = maker, // similar to mint_a
-        seeds = [b"escrow", maker.key().as_ref(), escrow.seed.to_be_bytes().as_ref() ],
+        seeds = [b"escrow", maker.key().as_ref(), escrow.seed.to_le_bytes().as_ref()],
         bump = escrow.bump,
     )]
     // ⚠️ Without has_one, someone could pass in a valid escrow account with mismatched fields, and potentially steal tokens or mess with logic.
@@ -98,6 +97,8 @@ impl<'info> Refund<'info> {
             signer_seeds
         );
 
-        close_account(close_cpi_ctx)
+        close_account(close_cpi_ctx)?;
+
+        Ok(())
     }
 }
